@@ -1,0 +1,78 @@
+<div style="float:left; margin-bottom:5px" cond="$logged_info->is_admin=='Y' || $is_logged" class="sbtn_small sbtn-dark">
+	<!--@if($module_info->calendar != 'Y')-->
+			<a href="#" onclick="toggle_object('calendar'); return false;" >
+			<strong>{$year}년 {$month}월 {$day}일</strong></a>
+		<!--@else-->
+			<strong>{$year}년 {$month}월 {$day}일</strong>
+	<!--@end-->
+</div>
+
+<div style="float:right; margin-bottom:5px" cond="$logged_info->is_admin=='Y' || $is_logged" class="sbtn_small sbtn-white">
+	<i class="fas fa-bullhorn"></i> 날짜 부분 클릭시 그날의 인사말을 볼 수 있습니다
+</div>
+
+<table cellspacing="0" class="personalTable">
+	<thead>
+		<tr>
+			<th class="sunday center same_height" >SUN</th>
+			<th class="center same_height" >MON</th>
+			<th class="center same_height" >TUE</th>
+			<th class="center same_height" >WED</th>
+			<th class="center same_height" >THU</th>
+			<th class="center same_height" >FRI</th>
+			<th class="saturday center same_height">SAT</th>
+		</tr>
+	</thead>
+    <tbody>
+
+	{@
+		$_day=1;
+		$j=0;
+	}
+    <!--@while($_day <= $admin_date_info->day_max)-->
+        <!--@if($j % 7 == 0)--><tr><!--@end-->
+
+        <!--@while($j < $admin_date_info->week_start)-->
+            <td>&nbsp;</td>
+			{@$j++}
+        <!--@end-->
+		<td <!--@if(sprintf("%04d%02d%02d",$admin_date_info->_year,$admin_date_info->_month,$_day) == date("Ymd"))-->class="days today"<!--@else-->class="days"<!--@end-->>
+
+			{@
+				$check_date = sprintf("%s%s%02d", $admin_date_info->_year, $admin_date_info->_month, $_day);
+				$checked = $checkedM[$check_date]['regdate'];
+				$point = $checkedM[$check_date]['point'];
+			}
+
+			<!--@if($logged_info->is_admin=='Y' || $is_logged)-->
+				<a href="{getUrl('document_srl','','selected_date',zDate(date('YmdHis',mktime(0,0,0,$admin_date_info->_month, $_day, $admin_date_info->_year)),'Ymd'))}">
+			<!--@end-->
+				<span class="sunday"|cond="$j%7==1" class="saturday"|cond="$j%7==0">
+					<!--@if(sprintf("%04d%02d%02d",$admin_date_info->_year,$admin_date_info->_month,$_day) == date("Ymd"))-->
+						<span style="background:orange; color:#fff; padding:3px; font-size:14px" class="pr_tooltip" pr_color="blue" pr_position="top" title="Today View">
+							{$_day++}
+						</span>
+					<!--@else-->
+						<span class="pr_tooltip" pr_color="sky" pr_position="top" title="View">{$_day++}</span>
+					<!--@end-->
+				</span>
+			<!--@if($logged_info->is_admin=='Y' || $is_logged)-->
+				</a>
+			<!--@end-->
+
+			<div class="stamp">
+				<img src="./css/stamp_mh.png" cond="$checked==1"/>
+				<span>{$point}</span>
+			</div>
+		</td>
+        <!--@if($_day-1 == $admin_date_info->day_max)-->
+			<!--@while($j %7 < 6)-->
+				<td>&nbsp;</td>
+                {@$j++}
+            <!--@end-->
+        <!--@end-->
+        <!--@if($j % 7 == 6)--></tr><!--@end-->
+        {@$j++}
+    <!--@end-->
+    </tbody>
+</table>

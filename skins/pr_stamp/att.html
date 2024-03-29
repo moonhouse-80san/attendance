@@ -1,0 +1,31 @@
+<div class="alert alert-warning">{$lang->attend_click_msg}</div>
+
+<script>
+function beCheckWrite(obj){
+	var delaytime = 10000,
+			submingText = '출석중..',
+			ori_text = '<i class="fa fa-paw fa-2x"></i>',
+			checkInput = false;
+
+	if(!ori_text){
+		checkInput = false;
+		ori_text = jQuery(obj).text();
+	}else{
+		checkInput = true;
+	}
+	if(ori_text == submingText) return false;
+	//obj.disabled=true;
+	if(!checkInput){
+		jQuery(obj).text(submingText);
+	}else{
+		jQuery(obj).val(submingText);
+	}
+	// 설정한 시간이 지나면 다시 활성화
+	setTimeout(function(){
+		if(checkInput) jQuery(obj).val(ori_text);
+		else jQuery(obj).text(ori_text);
+	},delaytime);
+
+	return true;
+}
+</script>
