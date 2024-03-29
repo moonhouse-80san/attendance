@@ -28,37 +28,34 @@ class attendanceModel extends attendance
 			/** @var $oModuleModel moduleModel */
 			$oModuleModel = getModel('module');
 			$config = $oModuleModel->getModuleConfig('attendance');
-			if(!$config)
-			{
-				$config = new stdClass();
-			}
+
 			if (!$config->add_point)
 			{
-				$config->add_point = '0';
+				$config->add_point = '5';
 			}
 			if (!$config->first_point)
 			{
-				$config->first_point = '0';
+				$config->first_point = '30';
 			}
 			if (!$config->second_point)
 			{
-				$config->second_point = '0';
+				$config->second_point = '15';
 			}
 			if (!$config->third_point)
 			{
-				$config->third_point = '0';
+				$config->third_point = '5';
 			}
 			if (!$config->yearly_point)
 			{
-				$config->yearly_point = '0';
+				$config->yearly_point = '500';
 			}
 			if (!$config->monthly_point)
 			{
-				$config->monthly_point = '0';
+				$config->monthly_point = '50';
 			}
 			if (!$config->weekly_point)
 			{
-				$config->weekly_point = '0';
+				$config->weekly_point = '5';
 			}
 			if (!$config->about_target)
 			{
@@ -358,53 +355,45 @@ class attendanceModel extends attendance
 		return $result;
 	}
 
-	/**
-	 * 선택한 날자가 포함된 달에 출석한 날자를 모두 가져옴
-	 * @param $member_srl
-	 * @param $today
-	 * @return array|bool
-	 */
-	function getIsCheckedMonth($member_srl, $today)
-	{
-		if (!$member_srl)
-		{
-			return false;
-		}
-
-		if ($oCacheHandler = $this->getCacheHandler())
-		{
-			if (($result = $oCacheHandler->get($oCacheHandler->getGroupKey('attendance', "member:$member_srl:isCheckMonth:$today"), time() - 86400)) !== false)
-			{
-				return $result;
-			}
-		}
-
-		$args = new stdClass();
-		$args->regdate = $today;
-		$args->member_srl = $member_srl;
-		$output = executeQueryArray('attendance.getIsCheckedMonth', $args);
-
-		$regdate_array = array();
-		if ($output->data)
-		{
-			foreach ($output->data as $val)
-			{
-				$regdate_array[] = substr($val->regdate, 0, 8);
-			}
-			$result = array_count_values($regdate_array);
-
-			if ($oCacheHandler)
-			{
-				$oCacheHandler->put($oCacheHandler->getGroupKey('attendance', "member:$member_srl:isCheckMonth:$today"), $result, 86400);
-			}
-		}
-		else
-		{
-			return false;
-		}
-
-		return $result;
-	}
+/**
+ * 선택한 날자가 포함된 달에 출석한 날자를 모두 가져옴
+ * @param $member_srl
+ * @param $today
+ * @return array|bool
+ */
+function getIsCheckedMonth($member_srl, $today)
+{
+if(!$member_srl)
+{
+return false;
+}
+$args = new stdClass();
+$args->regdate = $today;
+$args->member_srl = $member_srl;
+$output = executeQueryArray('attendance.getIsCheckedMonth', $args);
+$regdate_array = array();
+if($output->data)
+{
+foreach($output->data as $val)
+{
+$regdate = substr($val->regdate, 0, 8);
+if (isset($regdate_array[$regdate]))
+{
+++$regdate_array[$regdate]['regdate'];
+}
+else
+{
+$regdate_array[$regdate]['regdate'] = 1;
+$regdate_array[$regdate]['point'] = $val->today_point;
+}
+}
+}
+else
+{
+return false;
+}
+return $regdate_array;
+}
 
 	/**
 	 * @param $today
@@ -546,22 +535,18 @@ class attendanceModel extends attendance
 
 	/**
 	 * @param $member_srl
-	 * @return BaseObject|Object
+	 * @return Object
 	 */
-	function getContinuityDataByMemberSrl($member_srl, $regdate = null)
+	function getContinuityDataByMemberSrl($member_srl)
 	{
 		$args = new stdClass();
 		$args->member_srl = $member_srl;
-		if($regdate)
-		{
-			$args->yesterday = $regdate;
-		}
+
 		$output = executeQuery('attendance.getContinuityData', $args);
-		if(is_array($output->data) && count($output->data) !== 1)
+		if (count($output->data) != '1')
 		{
 			return $this->makeObject(-1, '한명의 회원의 정보만 입력이 가능합니다.');
 		}
-		
 		return $output->data;
 	}
 
@@ -798,6 +783,7 @@ class attendanceModel extends attendance
 	 */
 	function availableCheck()
 	{
+		// 모듈 설정값 가져오기
 		$config = $this->getConfig();
 
 		if ($config->about_time_control == 'yes')
@@ -813,35 +799,11 @@ class attendanceModel extends attendance
 			$now->min = zDate(date('YmdHis'), "i");
 			if (mktime($now->hour, $now->min, 0, 0, 0) >= mktime($start->hour, $start->min, 0, 0, 0) && mktime($now->hour, $now->min, 0, 0, 0) < mktime($end->hour, $end->min, 0, 0, 0))
 			{
-				return true;
+				return true;   //금지시간대일 경우
 			}
+			return false;
 		}
-		else if($config->about_time_control == 'rand')
-		{
-			$isReloadConfig = false;
-			$today = date('Ymd');
-			if($today != $config->rand_open_day)
-			{
-				if(getController('attendance')->setOpenAttendanceTime())
-				{
-					$isReloadConfig = true;
-				}
-			}
-			
-			if($isReloadConfig)
-			{
-				$config = $this->getConfig();
-			}
-			
-			$nowTime = time();
-			$randTime = strtotime($config->rand_open_time);
-			if($nowTime < $randTime)
-			{
-				return true;
-			}
-		}
-		
-		return false;
+		return false;   //금지시간이 아닐 경우
 	}
 
 	/**

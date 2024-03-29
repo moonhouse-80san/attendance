@@ -176,9 +176,8 @@ class attendanceView extends attendance
 		{
 			return $this->makeObject(-1, '회원번호는 필수입니다.');
 		}
-		/** @var attendanceModel $oAttendanceModel */
 		$oAttendanceModel = getModel('attendance');
-		$data = $oAttendanceModel->getContinuityDataByMemberSrl($member_srl, Context::get('regdate'));
+		$data = $oAttendanceModel->getContinuityDataByMemberSrl($member_srl);
 		Context::set('data', $data);
 		$this->setTemplateFile('continuous');
 	}
@@ -197,15 +196,15 @@ class attendanceView extends attendance
 
 		if (!$member_srl)
 		{
-			if ($logged_info->is_admin !== 'Y')
-			{
-				return $this->makeObject(-1, 'msg_not_permitted');
-			}
 			$member_srl = $logged_info->member_srl;
 			$member_info = $logged_info;
 		}
 		else
 		{
+			if ($logged_info->is_admin !== 'Y' && $member_srl != $logged_info->member_srl)
+			{
+				return $this->makeObject(-1, 'msg_not_permitted');
+			}
 			$member_info = getModel('member')->getMemberInfoByMemberSrl($member_srl);
 		}
 
