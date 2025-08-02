@@ -62,7 +62,24 @@
 
 			<div class="stamp">
 				<img src="./css/stamp_mh.png" cond="$checked==1"/>
-				<span>{$point}</span>
+				<!--@if($logged_info->is_admin=='Y' || $is_logged)-->
+					<!--@if(sprintf("%04d%02d%02d",$admin_date_info->_year,$admin_date_info->_month,$_day-1) == date("Ymd"))-->
+						<!-- 오늘인 경우 -->
+						<a href="{getUrl('document_srl','','selected_date',zDate(date('YmdHis',mktime(0,0,0,$admin_date_info->_month, $_day-1, $admin_date_info->_year)),'Ymd'))}" class="pr_tooltip" pr_color="blue" pr_position="top" title="Today View">
+							<span>{$point}</span>
+						</a>
+					<!--@elseif(sprintf("%04d%02d%02d",$admin_date_info->_year,$admin_date_info->_month,$_day-1) < date("Ymd"))-->
+						<!-- 과거 날짜인 경우 -->
+						<a href="{getUrl('document_srl','','selected_date',zDate(date('YmdHis',mktime(0,0,0,$admin_date_info->_month, $_day-1, $admin_date_info->_year)),'Ymd'))}" class="pr_tooltip" pr_color="sky" pr_position="top" title="{sprintf('%04d-%02d-%02d', $admin_date_info->_year, $admin_date_info->_month, $_day-1)} View">
+							<span>{$point}</span>
+						</a>
+					<!--@else-->
+						<!-- 미래 날짜인 경우 -->
+						<span title="Future - {sprintf('%04d-%02d-%02d', $admin_date_info->_year, $admin_date_info->_month, $_day-1)}" style="color:#ccc;">{$point}</span>
+					<!--@end-->
+				<!--@else-->
+					<span title="{sprintf('%04d-%02d-%02d', $admin_date_info->_year, $admin_date_info->_month, $_day-1)}">{$point}</span>
+				<!--@end-->
 			</div>
 		</td>
         <!--@if($_day-1 == $admin_date_info->day_max)-->

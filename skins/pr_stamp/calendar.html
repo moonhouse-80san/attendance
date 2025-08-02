@@ -8,7 +8,7 @@
 </div>
 
 <div style="float:right; margin-bottom:5px" cond="$logged_info->is_admin=='Y' || $is_logged" class="sbtn_small sbtn-white">
-	<i class="fas fa-bullhorn"></i> 날짜 부분 클릭시 그날의 인사말을 볼 수 있습니다
+	<i class="fas fa-bullhorn"></i> 날짜 칸 클릭시 그 날의 인사말을 볼 수 있습니다
 </div>
 
 <table cellspacing="0" class="personalTable">
@@ -45,24 +45,55 @@
 			}
 
 			<!--@if($logged_info->is_admin=='Y' || $is_logged)-->
-				<a href="{getUrl('document_srl','','selected_date',zDate(date('YmdHis',mktime(0,0,0,$admin_date_info->_month, $_day, $admin_date_info->_year)),'Ymd'))}">
-			<!--@end-->
+				<!--@if(sprintf("%04d%02d%02d",$admin_date_info->_year,$admin_date_info->_month,$_day) <= date("Ymd"))-->
+					<a href="{getUrl('document_srl','','selected_date',zDate(date('YmdHis',mktime(0,0,0,$admin_date_info->_month, $_day, $admin_date_info->_year)),'Ymd'))}">
+						<span class="sunday"|cond="$j%7==1" class="saturday"|cond="$j%7==0">
+							<!--@if(sprintf("%04d%02d%02d",$admin_date_info->_year,$admin_date_info->_month,$_day) == date("Ymd"))-->
+								<span style="background:orange; color:#fff; padding:3px; font-size:14px" class="pr_tooltip" pr_color="blue" pr_position="top" title="Today">
+									{$_day++}
+								</span>
+							<!--@else-->
+								<span class="pr_tooltip" pr_color="sky" pr_position="top" title="{sprintf('%04d-%02d-%02d', $admin_date_info->_year, $admin_date_info->_month, $_day)}">{$_day++}</span>
+							<!--@end-->
+						</span>
+					</a>
+				<!--@else-->
+					<span class="sunday"|cond="$j%7==1" class="saturday"|cond="$j%7==0" style="color:#ccc; cursor:default;">
+						<span>{$_day++}</span>
+					</span>
+				<!--@end-->
+			<!--@else-->
 				<span class="sunday"|cond="$j%7==1" class="saturday"|cond="$j%7==0">
 					<!--@if(sprintf("%04d%02d%02d",$admin_date_info->_year,$admin_date_info->_month,$_day) == date("Ymd"))-->
-						<span style="background:orange; color:#fff; padding:3px; font-size:14px" class="pr_tooltip" pr_color="blue" pr_position="top" title="Today View">
+						<span>
 							{$_day++}
 						</span>
 					<!--@else-->
-						<span class="pr_tooltip" pr_color="sky" pr_position="top" title="View">{$_day++}</span>
+						<span>{$_day++}</span>
 					<!--@end-->
 				</span>
-			<!--@if($logged_info->is_admin=='Y' || $is_logged)-->
-				</a>
 			<!--@end-->
 
 			<div class="stamp">
 				<img src="./css/stamp_mh.png" cond="$checked==1"/>
-				<span>{$point}</span>
+				<!--@if($logged_info->is_admin=='Y' || $is_logged)-->
+					<!--@if(sprintf("%04d%02d%02d",$admin_date_info->_year,$admin_date_info->_month,$_day-1) == date("Ymd"))-->
+						<!-- 오늘인 경우 -->
+						<a href="{getUrl('document_srl','','selected_date',zDate(date('YmdHis',mktime(0,0,0,$admin_date_info->_month, $_day-1, $admin_date_info->_year)),'Ymd'))}" class="pr_tooltip" pr_color="blue" pr_position="top" title="Today View">
+							<span>{$point}</span>
+						</a>
+					<!--@elseif(sprintf("%04d%02d%02d",$admin_date_info->_year,$admin_date_info->_month,$_day-1) < date("Ymd"))-->
+						<!-- 과거 날짜인 경우 -->
+						<a href="{getUrl('document_srl','','selected_date',zDate(date('YmdHis',mktime(0,0,0,$admin_date_info->_month, $_day-1, $admin_date_info->_year)),'Ymd'))}" class="pr_tooltip" pr_color="sky" pr_position="top" title="{sprintf('%04d-%02d-%02d', $admin_date_info->_year, $admin_date_info->_month, $_day-1)} View">
+							<span>{$point}</span>
+						</a>
+					<!--@else-->
+						<!-- 미래 날짜인 경우 -->
+						<span title="Future - {sprintf('%04d-%02d-%02d', $admin_date_info->_year, $admin_date_info->_month, $_day-1)}" style="color:#ccc;">{$point}</span>
+					<!--@end-->
+				<!--@else-->
+					<span title="{sprintf('%04d-%02d-%02d', $admin_date_info->_year, $admin_date_info->_month, $_day-1)}">{$point}</span>
+				<!--@end-->
 			</div>
 		</td>
         <!--@if($_day-1 == $admin_date_info->day_max)-->

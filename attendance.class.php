@@ -63,7 +63,11 @@ class attendance extends ModuleObject
 		/** @var  $oModuleModel moduleModel */
 		$oModuleModel = getModel('module');
 
-		/** @var $oDB DBMysql */
+		if(FileHandler::exists('./modules/attendance/lang/lang.xml'))
+		{
+			return true;
+		}
+
 		$oDB = DB::getInstance();
 		// This line start to add to database column list check.
 		if (!$oDB->isColumnExists("attendance", "greetings"))
@@ -183,6 +187,11 @@ class attendance extends ModuleObject
 			return true;
 		}
 
+		if($oDB->getColumnInfo('attendance', 'ipaddress')->size < 128)
+		{
+			return true;
+		}
+
 		$module_info = getModel('attendance')->getAttendanceInfo('attendance');
 		if (!$module_info->module_srl)
 		{
@@ -216,8 +225,22 @@ class attendance extends ModuleObject
 		$oModuleController = getController('module');
 		$oMemberModel = getModel('member');
 
-		/** @var $oDB DBMysql */
 		$oDB = DB::getInstance();
+
+		if(FileHandler::exists('./modules/attendance/lang/lang.xml'))
+		{
+			// 보통은 업데이트시 다운로드 받은 최신버전의 파일이 존재 하기에 실행할 필요 없지만, 파일이 없을 경우에 재 생성.
+			if(!FileHandler::exists('./modules/attendance/lang/ko.php'))
+			{
+				Rhymix\Framework\Parsers\LangParser::convertDirectory(RX_BASEDIR . 'modules/attendance/lang', ['ko']);
+				if(!FileHandler::exists('./modules/attendance/lang/ko.php'))
+				{
+					return new BaseObject(-1, '언어 변환에 문제가 있습니다.');
+				}
+			}
+
+			FileHandler::removeFile('./modules/attendance/lang/lang.xml');
+		}
 
 		if (!$oDB->isColumnExists("attendance", "greetings"))
 		{
@@ -352,6 +375,11 @@ class attendance extends ModuleObject
 					executeQuery("attendance.migrationInsertMemberSrlAttendanceYearly", $args);
 				}
 			}
+		}
+
+		if($oDB->getColumnInfo('attendance', 'ipaddress')->size < 128)
+		{
+			$oDB->modifyColumn('attendance', 'ipaddress', 'varchar', 128, null, true);
 		}
 
 		if ($oDB->isColumnExists("attendance", "user_id"))
